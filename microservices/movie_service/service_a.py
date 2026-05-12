@@ -1,14 +1,9 @@
 import requests
 import time
 from fastapi import FastAPI
+import sqlite3
 
 app = FastAPI()
-
-MOVIES_DB = {
-    1: {"title": "The devil wears Prada 2", "desc": "The movie reunites Miranda Priestly and a seasoned Andy Sachs to save a struggling Runway magazine in a digital-first world."},
-    2: {"title": "Michael", "desc": "A musical biographical drama that chronicles the life of Michael Jackson, from his childhood stardom in the Jackson 5 to his peak as the King of Pop"},
-    3: {"title": "Wuthering Heights", "desc": "An adaptation after the gothic novel with the same name, exploring an intense, destructive love between Catherine Earnshaw and Heathcliff."}
-}
 
 TRENDING_MOVIES = [50,51,52,53]
 
@@ -50,7 +45,7 @@ breaker = CircuitBreaker()
 
 @app.get("/movie/{movie_id}")
 async def get_movie(movie_id: int):
-    movie = MOVIES_DB.get(movie_id, {"title": "Not found", "desc": "Not found"})
+    movie = get_movie_from_db(movie_id)
 
     if breaker.attempt_request():
         try:
@@ -78,3 +73,16 @@ async def get_movie(movie_id: int):
         "description": movie["desc"],
         "recommendations": recommendations
     }
+
+def get_movie_from_db(movie_id):
+    conn = sqlite3.connect("movies.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM movies WHERE id = ?", (movie_id,))
+    movie = cursor.fetchone()
+
+    conn.close()
+
+    if movie:
+        return {"title": movie[1], "desc": movie[2]}
+    return {"title": "Not found", "desc": "Not found"}
