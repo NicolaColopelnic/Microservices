@@ -86,3 +86,12 @@ def get_movie_from_db(movie_id):
     if movie:
         return {"title": movie[1], "desc": movie[2]}
     return {"title": "Not found", "desc": "Not found"}
+
+@app.get("/movies")
+async def get_all_movies():
+    conn = sqlite3.connect("movies.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, title FROM movies")
+    movies = cursor.fetchall()
+    conn.close()
+    return [{"id": movie[0], "title": movie[1]} for movie in movies]

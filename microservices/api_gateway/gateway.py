@@ -1,3 +1,5 @@
+import sqlite3
+
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
@@ -6,18 +8,14 @@ app = FastAPI()
 
 SERVICE_A_URL = "http://127.0.0.1:5001"
 
-MOVIE_LIST = {
-    1: "The devil wears Prada 2",
-    2: "Michael",
-    3: "Wuthering Heights"
-}
-
 # home page interface - the user chooses a movie title and is redirected to that movies page
 @app.get("/", response_class=HTMLResponse)
 async def home_page():
+    response = requests.get(f"{SERVICE_A_URL}/movies")
+    movie_list = response.json()
     buttons_html = ""
-    for movie_id, title in MOVIE_LIST.items():
-        buttons_html += f'<a href="/movie/{movie_id}" class="btn">{title}</a>'
+    for movie in movie_list:
+        buttons_html += f'<a href="/movie/{movie["id"]}" class="btn">{movie["title"]}</a>'
 
     return f"""
     <html>
